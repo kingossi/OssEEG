@@ -51,9 +51,8 @@ class GraphManager:
             self.eeg_analyzer.ica_manager.enable_ica_button()
         elif current_graph == "Multitaper PSD":
             self.graphLayout.addWidget(self.multitaperPSDPlot)
-            self.multitaperPSDPlot.plot(self.eeg_analyzer.data, self.eeg_analyzer.sf)
-            self.eeg_analyzer.complexity_calculator.enable_complexity_button()
-            self.eeg_analyzer.ica_manager.enable_ica_button()
+            selected_indices = [self.eeg_analyzer.channel_names.index(ch) for ch in selected_channels]
+            self.multitaperPSDPlot.plot(self.eeg_analyzer.data[selected_indices], self.eeg_analyzer.sf)
 
     @staticmethod
     def clearLayout(layout):

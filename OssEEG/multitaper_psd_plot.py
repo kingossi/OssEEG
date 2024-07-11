@@ -47,17 +47,18 @@ class MultitaperPSDPlot(QtWidgets.QWidget):
         cache_key = (tuple(data_ds.flatten()), sf_ds, max_freq)
         if cache_key in self.cache:
             freqs, psd = self.cache[cache_key]
-            self._plot_results(freqs, psd)
         else:
-            self.worker = MultitaperPSDWorker(data_ds, sf_ds, max_freq, self.band_d, cache_key)
-            self.worker.resultReady.connect(self.handle_results)
-            self.worker.start()
+            if data_ds.ndim == 2:  # Handle multi-channel data
+                psd_all = []
+                for channel in data_ds:
+                    psd, freqs = psd_array_multitaper(channel, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
+                    psd_all.append(psd)
+                psd = np.mean(psd_all, axis=0)
+            else:  # Handle single-channel data
+                psd, freqs = psd_array_multitaper(data_ds, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
 
-    def handle_results(self, freqs, psd, cache_key):
-        self.cache[cache_key] = (freqs, psd)
-        self._plot_results(freqs, psd)
+            self.cache[cache_key] = (freqs, psd)
 
-    def _plot_results(self, freqs, psd):
         self.plotWidget.plot(freqs, psd, pen='r')
 
         colors = self.extend_colors(len(self.band_d))
@@ -109,27 +110,3 @@ class MultitaperPSDPlot(QtWidgets.QWidget):
         bg1 = pg.BarGraphItem(x=np.arange(len(bands)), height=values, width=0.6, brushes=brushes)
         self.histogramWidget.addItem(bg1)
         self.histogramWidget.getAxis('bottom').setTicks([[(i, band) for i, band in enumerate(bands)]])
-
-
-class MultitaperPSDWorker(QtCore.QThread):
-    resultReady = QtCore.pyqtSignal(np.ndarray, np.ndarray, tuple)
-
-    def __init__(self, data, sf, max_freq, band_d, cache_key):
-        super().__init__()
-        self.data = data
-        self.sf = sf
-        self.max_freq = max_freq
-        self.band_d = band_d
-        self.cache_key = cache_key
-
-    def run(self):
-        if self.data.ndim == 2:  # Handle multi-channel data
-            psd_all = []
-            for channel in self.data:
-                psd, freqs = psd_array_multitaper(channel, sfreq=self.sf, fmax=self.max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
-                psd_all.append(psd)
-            psd = np.mean(psd_all, axis=0)
-        else:  # Handle single-channel data
-            psd, freqs = psd_array_multitaper(self.data, sfreq=self.sf, fmax=self.max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
-
-        self.resultReady.emit(freqs, psd, self.cache_key)
