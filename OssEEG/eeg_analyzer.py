@@ -30,6 +30,7 @@ class EEGAnalyzer(QMainWindow):
         self.complexity_calculator = ComplexityCalculator(self)
         self.raw = None
         self.data = None
+        self.channel_names = []  # Initialize channel_names
         self.initUI()
 
     def initUI(self):
@@ -120,3 +121,10 @@ class EEGAnalyzer(QMainWindow):
     def showTermsDialog(self):
         QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license.\nFor more details, visit https://www.gnu.org/licenses/gpl-3.0.html")
 
+    def loadData(self, raw, data, channel_names, sf):
+        self.raw = raw
+        self.data = data
+        self.channel_names = channel_names
+        self.sf = sf
+        self.channel_selector.populate_channel_selector()
+        self.graph_manager.updateGraph()

@@ -4,6 +4,7 @@ from welch_analysis_plot import WelchAnalysisPlot
 from specparam_analysis_plot import SpecparamAnalysisPlot
 from multitaper_psd_plot import MultitaperPSDPlot
 
+
 class GraphManager:
     def __init__(self, eeg_analyzer):
         self.eeg_analyzer = eeg_analyzer
@@ -18,6 +19,7 @@ class GraphManager:
         self.eegTimeSeriesPlot = EEGTimeSeriesPlot()
         self.welchAnalysisPlot = WelchAnalysisPlot(self.eeg_analyzer.band_d)
         self.specparamAnalysisPlot = SpecparamAnalysisPlot()
+        self.specparamAnalysisPlot.eeg_analyzer = self.eeg_analyzer  # Set the reference to the EEGAnalyzer
         self.multitaperPSDPlot = MultitaperPSDPlot(self.eeg_analyzer.band_d)
 
         self.graphLayout = QtWidgets.QVBoxLayout()
@@ -45,8 +47,7 @@ class GraphManager:
             self.eeg_analyzer.ica_manager.enable_ica_button()
         elif current_graph == "Specparam Analysis":
             self.graphLayout.addWidget(self.specparamAnalysisPlot)
-            selected_indices = [self.eeg_analyzer.channel_names.index(ch) for ch in selected_channels]
-            self.specparamAnalysisPlot.plot(self.eeg_analyzer.data[selected_indices], self.eeg_analyzer.sf)
+            # Do not plot here, wait for button click to trigger the plot
             self.eeg_analyzer.complexity_calculator.enable_complexity_button()
             self.eeg_analyzer.ica_manager.enable_ica_button()
         elif current_graph == "Multitaper PSD":
