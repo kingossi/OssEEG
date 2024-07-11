@@ -1,6 +1,7 @@
+import sys
 import numpy as np
 from PyQt6 import QtWidgets, QtGui, QtCore
-from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox
 
 from channel_selector import ChannelSelector
 from complexity_calculator import ComplexityCalculator
@@ -32,13 +33,29 @@ class EEGAnalyzer(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('EEG Analysis Tool')
+        self.setWindowTitle('OssEEG')
         self.setGeometry(100, 100, 1200, 800)
+
+        # Set the window icon
+        self.setWindowIcon(QtGui.QIcon('logo.png'))
 
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
 
         menu_bar = self.menuBar()
+
+        # Adding logo to the menu bar
+        logo_menu = menu_bar.addMenu(QtGui.QIcon('logo.png'), ' ')
+        logo_menu.setIcon(QtGui.QIcon('logo.png'))
+
+        about_action = QtGui.QAction('About', self)
+        about_action.triggered.connect(self.showAboutDialog)
+        logo_menu.addAction(about_action)
+
+        terms_action = QtGui.QAction('Terms and Conditions', self)
+        terms_action.triggered.connect(self.showTermsDialog)
+        logo_menu.addAction(terms_action)
+
         file_menu = menu_bar.addMenu('File')
 
         load_file_action = QtGui.QAction('Load EEG File', self)
@@ -97,9 +114,9 @@ class EEGAnalyzer(QMainWindow):
         self.setCentralWidget(central_widget)
         self.show()
 
+    def showAboutDialog(self):
+        QMessageBox.about(self, "About", "OssEEG\nVersion 1.0\nDeveloped by Ossi (: ")
 
-
-
-
-
+    def showTermsDialog(self):
+        QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license.\nFor more details, visit https://www.gnu.org/licenses/gpl-3.0.html")
 
