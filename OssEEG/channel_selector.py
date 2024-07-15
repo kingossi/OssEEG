@@ -1,7 +1,5 @@
 from PyQt6 import QtWidgets, QtCore
 
-from PyQt6 import QtWidgets, QtCore
-
 class ChannelSelector:
     def __init__(self, eeg_analyzer):
         self.eeg_analyzer = eeg_analyzer
@@ -32,6 +30,7 @@ class ChannelSelector:
             item = self.channelSelector.item(index)
             item.setSelected(state == QtCore.Qt.CheckState.Checked)
         self.channelSelector.blockSignals(False)
+        self.eeg_analyzer.graph_manager.updateGraph()
 
     def handleChannelSelectionChange(self):
         selected_channels = [item.text() for item in self.channelSelector.selectedItems()]
@@ -45,3 +44,4 @@ class ChannelSelector:
             self.selectAllCheckbox.blockSignals(True)
             self.selectAllCheckbox.setChecked(True)
             self.selectAllCheckbox.blockSignals(False)
+        self.eeg_analyzer.graph_manager.updateGraph()

@@ -4,7 +4,6 @@ from welch_analysis_plot import WelchAnalysisPlot
 from specparam_analysis_plot import SpecparamAnalysisPlot
 from multitaper_psd_plot import MultitaperPSDPlot
 
-
 class GraphManager:
     def __init__(self, eeg_analyzer):
         self.eeg_analyzer = eeg_analyzer
