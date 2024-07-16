@@ -1,16 +1,27 @@
+import logging
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 from PyQt6 import QtWidgets
-from PyQt6.QtWidgets import QVBoxLayout, QWidget, QListWidgetItem, QDialog
-from matplotlib import pyplot as plt
+from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mne.viz import plot_ica_properties
 
 from OssEEG.ica_worker import ICAWorker
 
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+
 
 class ICAManager:
     def __init__(self, eeg_analyzer):
+        self.icaPlotLayout = None
+        self.icaButton = None
         self.eeg_analyzer = eeg_analyzer
-        self.dialogs = []  # To keep references to the dialog windows
+        self.selected_components = set()
+        self.axes = []
+        self.canvas = None
+        self.dialogs = []
+        self.patches = {}
 
     def initUI(self, layout):
         self.icaButton = QtWidgets.QPushButton('Run ICA')
@@ -29,25 +40,48 @@ class ICAManager:
         self.eeg_analyzer.ica_thread.icaFinished.connect(self.handle_ica_finished)
         self.eeg_analyzer.ica_thread.start()
 
-    def handle_ica_finished(self, ica, ica_fig):
+    def handle_ica_finished(self, ica, ica_fig, axes):
         self.eeg_analyzer.ica = ica
         self.clearLayout(self.icaPlotLayout)
-        canvas = FigureCanvas(ica_fig)
-        self.icaPlotLayout.addWidget(canvas)
+        self.canvas = FigureCanvas(ica_fig)
+        self.icaPlotLayout.addWidget(self.canvas)
+
+        self.axes = [ax for sublist in axes for ax in sublist]
+        for i, ax in enumerate(self.axes):
+            ax.set_picker(True)  # Enable picking on the axes
+            ax.figure.canvas.mpl_connect('pick_event', self.on_pick)
+
         self.show_ica_exclusion_ui()
+
+    def on_pick(self, event):
+        ax = event.artist.axes
+        if ax in self.axes:
+            idx = self.axes.index(ax)
+            if idx in self.selected_components:
+                self.selected_components.remove(idx)
+            else:
+                self.selected_components.add(idx)
+            self.update_selection()
+
+    def update_selection(self):
+        for i, ax in enumerate(self.axes):
+            if i in self.selected_components:
+                if i not in self.patches:
+                    patch = patches.Rectangle((0, 0), 1, 1, transform=ax.transAxes,
+                                              color='yellow', alpha=0.3)
+                    ax.add_patch(patch)
+                    self.patches[i] = patch
+            else:
+                if i in self.patches:
+                    self.patches[i].remove()
+                    del self.patches[i]
+        self.canvas.draw_idle()
 
     def show_ica_exclusion_ui(self):
         exclusionWidget = QWidget()
         exclusionLayout = QVBoxLayout(exclusionWidget)
         exclusionLabel = QtWidgets.QLabel("Select ICA components to exclude or plot properties:")
         exclusionLayout.addWidget(exclusionLabel)
-
-        self.icaSelector = QtWidgets.QListWidget()
-        self.icaSelector.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.MultiSelection)
-        for i in range(self.eeg_analyzer.ica.n_components_):
-            item = QListWidgetItem(f"ICA{str(i).zfill(3)}")
-            self.icaSelector.addItem(item)
-        exclusionLayout.addWidget(self.icaSelector)
 
         plotPropsButton = QtWidgets.QPushButton("Plot Properties")
         plotPropsButton.clicked.connect(self.plot_selected_ica_properties)
@@ -60,7 +94,7 @@ class ICAManager:
         self.icaPlotLayout.addWidget(exclusionWidget)
 
     def plot_selected_ica_properties(self):
-        selected_indices = [int(item.text().replace("ICA", "")) for item in self.icaSelector.selectedItems()]
+        selected_indices = list(self.selected_components)
         for index in selected_indices:
             dialog = QDialog()
             dialog.setWindowTitle(f"ICA Component {index} Properties")
@@ -73,11 +107,11 @@ class ICAManager:
             canvas = FigureCanvas(fig)
             layout.addWidget(canvas)
 
-            self.dialogs.append(dialog)  # Keep a reference to the dialog
-            dialog.show()  # Use show() instead of exec() to allow multiple dialogs to be open
+            self.dialogs.append(dialog)
+            dialog.show()
 
     def exclude_selected_ica(self):
-        self.eeg_analyzer.ica_exclude = [int(item.text().replace("ICA", "")) for item in self.icaSelector.selectedItems()]
+        self.eeg_analyzer.ica_exclude = list(self.selected_components)
         self.update_data_excluding_ica()
 
     def update_data_excluding_ica(self):

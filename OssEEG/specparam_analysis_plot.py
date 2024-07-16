@@ -1,14 +1,22 @@
-import sys
-import numpy as np
+import gc
+import hashlib
+
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtGui, QtCore
+
 from specparam_worker import SpecparamWorker
-import hashlib
-import gc
+
 
 class SpecparamAnalysisPlot(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.proxyWidget = None
+        self.overlayWidget = None
+        self.overlayLayout = None
+        self.movie = None
+        self.loadingIcon = None
+        self.loadingLabel = None
+        self.calculateButton = None
         self.aperiodic_curve = None
         self.specparam_curve = None
         self.specparam_plot = None

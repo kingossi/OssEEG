@@ -1,8 +1,9 @@
 from PyQt6 import QtCore
+from matplotlib import pyplot as plt
 from mne.preprocessing import ICA
 
 class ICAWorker(QtCore.QThread):
-    icaFinished = QtCore.pyqtSignal(object, object)
+    icaFinished = QtCore.pyqtSignal(object, object, list)
 
     def __init__(self, raw, parent=None):
         super().__init__(parent)
@@ -17,7 +18,8 @@ class ICAWorker(QtCore.QThread):
         explained_var_ratio = ica.get_explained_variance_ratio(filt_raw)
         for channel_type, ratio in explained_var_ratio.items():
             print(
-                f"Fraction of {channel_type} variance explained by all components: " f"{ratio}"
+                f"Fraction of {channel_type} variance explained by all components: {ratio}"
             )
-        ica_fig = ica.plot_components(show=False)
-        self.icaFinished.emit(ica, ica_fig)
+        fig, axes = plt.subplots(3, 5, figsize=(15, 9))
+        ica.plot_components(show=False, axes=axes)
+        self.icaFinished.emit(ica, fig, axes)

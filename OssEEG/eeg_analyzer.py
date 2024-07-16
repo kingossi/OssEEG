@@ -46,8 +46,7 @@ class EEGAnalyzer(QMainWindow):
         menu_bar = self.menuBar()
 
         # Adding logo to the menu bar
-        logo_menu = menu_bar.addMenu(QtGui.QIcon('logo.png'), ' ')
-        logo_menu.setIcon(QtGui.QIcon('logo.png'))
+        logo_menu = menu_bar.addMenu('Info')
 
         about_action = QtGui.QAction('About', self)
         about_action.triggered.connect(self.showAboutDialog)
