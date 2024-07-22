@@ -130,6 +130,7 @@ class EEGAnalyzer(QMainWindow):
         self.complexity_calculator.initUI(reportBoxLayout)
         layout.addLayout(reportBoxLayout)
         reportDialog.setLayout(layout)
+        self.complexity_calculator.enable_complexity_button()  # Enable the button here
         reportDialog.exec()
 
     def loadData(self, raw, data, channel_names, sf):
@@ -139,6 +140,7 @@ class EEGAnalyzer(QMainWindow):
         self.sf = sf
         self.channel_selector.populate_channel_selector()
         self.graph_manager.updateGraph()
+        self.complexity_calculator.enable_complexity_button()  # Enable the button when data is loaded
 
 
 class AnalysisWidget(QWidget):

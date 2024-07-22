@@ -4,23 +4,39 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 class ComplexityCalculator:
     def __init__(self, eeg_analyzer):
         self.eeg_analyzer = eeg_analyzer
+        self.complexityButton = None
+        self.complexityLayout = None
         logging.debug('Initialized ComplexityCalculator.')
 
     def initUI(self, layout):
-        self.complexityButton = QtWidgets.QPushButton('Calculate Complexity')
-        self.complexityButton.clicked.connect(self.calculate_complexity)
-        self.complexityButton.setEnabled(False)
+        if self.complexityButton is None:
+            self.complexityButton = QtWidgets.QPushButton('Calculate Complexity')
+            self.complexityButton.clicked.connect(self.calculate_complexity)
+            self.complexityButton.setEnabled(False)
+
+        if self.complexityButton.parent() is not None:
+            self.complexityButton.setParent(None)
+
         layout.addWidget(self.complexityButton)
 
-        self.complexityLayout = QtWidgets.QVBoxLayout()
+        if self.complexityLayout is None:
+            self.complexityLayout = QtWidgets.QVBoxLayout()
+
+        if self.complexityLayout.parent() is not None:
+            old_parent = self.complexityLayout.parent()
+            if isinstance(old_parent, QtWidgets.QWidget):
+                old_parent.layout().removeItem(self.complexityLayout)
+
         layout.addLayout(self.complexityLayout)
 
     def enable_complexity_button(self):
-        self.complexityButton.setEnabled(True)
-        logging.debug('Complexity button enabled.')
+        if self.complexityButton is not None:
+            self.complexityButton.setEnabled(True)
+            logging.debug('Complexity button enabled.')
 
     def calculate_complexity(self):
         self.clearLayout(self.complexityLayout)
@@ -38,7 +54,8 @@ class ComplexityCalculator:
 
         logging.debug(f'Selected channels: {selected_channels}')
 
-        self.complexityWorker = ComplexityWorker(selected_data, self.eeg_analyzer.sf, selected_channel_names, downsample_factor=10)
+        self.complexityWorker = ComplexityWorker(selected_data, self.eeg_analyzer.sf, selected_channel_names,
+                                                 downsample_factor=10)
         self.complexityWorker.complexityFinished.connect(self.display_complexity)
         self.complexityWorker.start()
 
