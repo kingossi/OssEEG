@@ -31,10 +31,24 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
     def initUI(self):
         layout = QtWidgets.QVBoxLayout()
         self.plotWidget = pg.GraphicsLayoutWidget()
+        self.plotWidget.setBackground('w')
+
         self.psd_plot = self.plotWidget.addPlot(title="Periodic Component")
+        self.psd_plot.getViewBox().setBackgroundColor('w')
+        self.psd_plot.getAxis('left').setPen('k')
+        self.psd_plot.getAxis('bottom').setPen('k')
+        self.psd_plot.getAxis('left').setTextPen('k')
+        self.psd_plot.getAxis('bottom').setTextPen('k')
+        self.psd_plot.showGrid(x=True, y=True, alpha=0.5)
         self.periodic_curve = self.psd_plot.plot(pen='m')
 
         self.specparam_plot = self.plotWidget.addPlot(title="Specparam Model Fit")
+        self.specparam_plot.getViewBox().setBackgroundColor('w')
+        self.specparam_plot.getAxis('left').setPen('k')
+        self.specparam_plot.getAxis('bottom').setPen('k')
+        self.specparam_plot.getAxis('left').setTextPen('k')
+        self.specparam_plot.getAxis('bottom').setTextPen('k')
+        self.specparam_plot.showGrid(x=True, y=True, alpha=0.5)
         self.specparam_curve = self.specparam_plot.plot(pen='r')
         self.aperiodic_curve = self.specparam_plot.plot(pen='g')
 
@@ -170,3 +184,5 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         if self.eeg_analyzer.sf is None:
             raise ValueError("sampling frequency (sf) is not set")
         return self.eeg_analyzer.sf
+
+

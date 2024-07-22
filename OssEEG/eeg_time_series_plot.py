@@ -3,7 +3,6 @@ import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtGui, QtCore
 
-
 class EEGTimeSeriesPlot(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -19,6 +18,15 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
     def initUI(self):
         layout = QtWidgets.QVBoxLayout()
         self.plotWidget = pg.PlotWidget(title="EEG Time Series")
+
+        # Set background to white and axis and grid color to black
+        self.plotWidget.setBackground('w')
+        self.plotWidget.getAxis('left').setPen('k')
+        self.plotWidget.getAxis('bottom').setPen('k')
+        self.plotWidget.getAxis('left').setTextPen('k')
+        self.plotWidget.getAxis('bottom').setTextPen('k')
+        self.plotWidget.showGrid(x=True, y=True, alpha=0.5)
+
         self.plotWidget.setDownsampling(mode='peak')
         self.plotWidget.setClipToView(True)
         self.plotWidget.setMouseEnabled(x=True, y=True)
@@ -26,6 +34,7 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         self.plotWidget.setLimits(xMin=0, xMax=None, yMin=0, yMax=None)
 
         self.toggleButton = QtWidgets.QPushButton("Switch to Zoom/Pan Mode")
+        self.toggleButton.setFixedSize(200, 50)
         self.toggleButton.clicked.connect(self.toggleMode)
 
         layout.addWidget(self.plotWidget)
@@ -56,25 +65,24 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         self.plotWidget.clear()
         time = np.arange(self.data.shape[1]) / self.sf
         offset = 0
-        curves = []
+        self.curves = []
+        max_amplitude = np.max(np.abs(self.data))  # Max amplitude for scaling
+        margin = max_amplitude  # Add margin at the bottom
+
         for i, ch_name in enumerate(selected_channels):
             ch_idx = self.channel_names.index(ch_name)
-            ch_data = self.data[ch_idx, :] + offset
-            curve = self.plotWidget.plot(time, ch_data, pen='b')
-            curves.append(curve)
-            offset += np.max(np.abs(self.data[ch_idx, :])) * 2  # Adjust the offset for stacking
+            ch_data = self.data[ch_idx, :] + offset + margin  # Add margin to each channel
+            curve = self.plotWidget.plot(time, ch_data, pen='k')  # Set pen color to black
+            self.curves.append(curve)
+            offset += max_amplitude * 2  # Adjust the offset for stacking
 
-        self.plotWidget.setLabel('bottom', 'Time (s)')
-        self.plotWidget.setLabel('left', 'Channels')
-        self.plotWidget.showGrid(x=True, y=True)
+        self.plotWidget.setLabel('bottom', 'Time (s)', color='k')
+        self.plotWidget.setLabel('left', 'Amplitude (uV)', color='k')
 
         # Set the y-axis range to fit the data
-        self.plotWidget.setYRange(0, offset)
+        self.plotWidget.setYRange(0, offset + margin)
 
         # Label each channel on the y-axis
-        yticks = [(i * np.max(np.abs(self.data[self.channel_names.index(ch), :])) * 2, ch) for i, ch in
-                  enumerate(selected_channels)]
+        yticks = [(i * max_amplitude * 2 + margin, ch) for i, ch in enumerate(selected_channels)]
         self.plotWidget.getAxis('left').setTicks([yticks])
-
-
 

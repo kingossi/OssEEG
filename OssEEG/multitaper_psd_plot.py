@@ -1,9 +1,11 @@
+import sys
 import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtCore
 from mne.time_frequency import psd_array_multitaper
 from scipy.signal import decimate
 import pandas as pd
+
 
 class MultitaperPSDPlot(QtWidgets.QWidget):
     def __init__(self, band_d, downsample_factor=10):
@@ -19,13 +21,27 @@ class MultitaperPSDPlot(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout()
 
         self.plotWidget = pg.PlotWidget(title="Multitaper Power Spectral Density")
+        self.plotWidget.setBackground('w')
+        self.plotWidget.getAxis('left').setPen('k')
+        self.plotWidget.getAxis('bottom').setPen('k')
+        self.plotWidget.getAxis('left').setTextPen('k')
+        self.plotWidget.getAxis('bottom').setTextPen('k')
+        self.plotWidget.showGrid(x=True, y=True, alpha=0.5)
         main_layout.addWidget(self.plotWidget, 3)
 
         right_layout = QtWidgets.QVBoxLayout()
+
         self.histogramWidget = pg.PlotWidget(title="Relative Band Distribution")
+        self.histogramWidget.setBackground('w')
+        self.histogramWidget.getAxis('left').setPen('k')
+        self.histogramWidget.getAxis('bottom').setPen('k')
+        self.histogramWidget.getAxis('left').setTextPen('k')
+        self.histogramWidget.getAxis('bottom').setTextPen('k')
+        self.histogramWidget.showGrid(x=True, y=True, alpha=0.5)
         right_layout.addWidget(self.histogramWidget, 1)
 
         self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setStyleSheet("background-color: white;")
         self.tableWidget.setColumnWidth(1, 200)
         self.tableWidget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
@@ -51,11 +67,13 @@ class MultitaperPSDPlot(QtWidgets.QWidget):
             if data_ds.ndim == 2:  # Handle multi-channel data
                 psd_all = []
                 for channel in data_ds:
-                    psd, freqs = psd_array_multitaper(channel, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
+                    psd, freqs = psd_array_multitaper(channel, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True,
+                                                      normalization='full', verbose=0)
                     psd_all.append(psd)
                 psd = np.mean(psd_all, axis=0)
             else:  # Handle single-channel data
-                psd, freqs = psd_array_multitaper(data_ds, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True, normalization='full', verbose=0)
+                psd, freqs = psd_array_multitaper(data_ds, sfreq=sf_ds, fmax=max_freq, adaptive=True, low_bias=True,
+                                                  normalization='full', verbose=0)
 
             self.cache[cache_key] = (freqs, psd)
 

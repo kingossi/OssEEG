@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from PyQt6 import QtWidgets, QtGui, QtCore
-from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox, QDialog
 
 from channel_selector import ChannelSelector
 from complexity_calculator import ComplexityCalculator
@@ -62,6 +62,13 @@ class EEGAnalyzer(QMainWindow):
         load_file_action.triggered.connect(self.file_loader.loadFile)
         file_menu.addAction(load_file_action)
 
+        # Adding Reporting to the menu
+        report_menu = menu_bar.addMenu('Report')
+
+        generate_report_action = QtGui.QAction('Generate Report', self)
+        generate_report_action.triggered.connect(self.showReportDialog)
+        report_menu.addAction(generate_report_action)
+
         mainSplitter = QSplitter(QtCore.Qt.Orientation.Horizontal)
         mainSplitter.setOpaqueResize(False)
 
@@ -76,7 +83,7 @@ class EEGAnalyzer(QMainWindow):
 
         mainSplitter.addWidget(preprocWidget)
 
-        analysisWidget = QWidget()
+        analysisWidget = AnalysisWidget(self)
         analysisLayout = QVBoxLayout(analysisWidget)
         analysisGroupBox = QtWidgets.QGroupBox("Data Analysis")
         analysisLayout.addWidget(analysisGroupBox)
@@ -98,16 +105,10 @@ class EEGAnalyzer(QMainWindow):
 
         mainSplitter.addWidget(channelSelectWidget)
 
-        reportWidget = QWidget()
-        reportLayout = QVBoxLayout(reportWidget)
-        reportGroupBox = QtWidgets.QGroupBox("Reporting")
-        reportLayout.addWidget(reportGroupBox)
-        reportBoxLayout = QVBoxLayout()
-        reportGroupBox.setLayout(reportBoxLayout)
-
-        self.complexity_calculator.initUI(reportBoxLayout)
-
-        mainSplitter.addWidget(reportWidget)
+        # Set initial sizes
+        mainSplitter.setStretchFactor(0, 1)
+        mainSplitter.setStretchFactor(1, 5)
+        mainSplitter.setStretchFactor(2, 1)
 
         layout.addWidget(mainSplitter)
 
@@ -120,6 +121,17 @@ class EEGAnalyzer(QMainWindow):
     def showTermsDialog(self):
         QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license.\nFor more details, visit https://www.gnu.org/licenses/gpl-3.0.html")
 
+    def showReportDialog(self):
+        reportDialog = QDialog(self)
+        reportDialog.setWindowTitle("Reporting")
+        reportDialog.setGeometry(300, 300, 600, 400)
+        layout = QVBoxLayout(reportDialog)
+        reportBoxLayout = QVBoxLayout()
+        self.complexity_calculator.initUI(reportBoxLayout)
+        layout.addLayout(reportBoxLayout)
+        reportDialog.setLayout(layout)
+        reportDialog.exec()
+
     def loadData(self, raw, data, channel_names, sf):
         self.raw = raw
         self.data = data
@@ -127,3 +139,25 @@ class EEGAnalyzer(QMainWindow):
         self.sf = sf
         self.channel_selector.populate_channel_selector()
         self.graph_manager.updateGraph()
+
+
+class AnalysisWidget(QWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dropEvent(self, event):
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            self.parent.file_loader.loadFile(file_path)
+        event.acceptProposedAction()
+
+

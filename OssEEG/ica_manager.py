@@ -90,7 +90,6 @@ class ICAManager:
         excludeButton = QtWidgets.QPushButton("Exclude Selected")
         excludeButton.clicked.connect(self.exclude_selected_ica)
         exclusionLayout.addWidget(excludeButton)
-
         self.icaPlotLayout.addWidget(exclusionWidget)
 
     def plot_selected_ica_properties(self):
