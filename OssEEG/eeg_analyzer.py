@@ -131,7 +131,7 @@ class EEGAnalyzer(QMainWindow):
         layout.addLayout(reportBoxLayout)
         reportDialog.setLayout(layout)
         self.complexity_calculator.enable_complexity_button()  # Enable the button here
-        reportDialog.exec()
+        reportDialog.show()  # Use show() instead of exec() to make the dialog non-blocking
 
     def loadData(self, raw, data, channel_names, sf):
         self.raw = raw
@@ -161,5 +161,6 @@ class AnalysisWidget(QWidget):
             file_path = urls[0].toLocalFile()
             self.parent.file_loader.loadFile(file_path)
         event.acceptProposedAction()
+
 
 

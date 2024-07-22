@@ -1,4 +1,4 @@
-from PyQt6 import QtWidgets
+from PyQt6 import QtWidgets, QtGui
 from complexity_worker import ComplexityWorker
 import logging
 
@@ -9,7 +9,9 @@ class ComplexityCalculator:
     def __init__(self, eeg_analyzer):
         self.eeg_analyzer = eeg_analyzer
         self.complexityButton = None
+        self.exportButton = None
         self.complexityLayout = None
+        self.complexityWidget = None
         logging.debug('Initialized ComplexityCalculator.')
 
     def initUI(self, layout):
@@ -22,6 +24,16 @@ class ComplexityCalculator:
             self.complexityButton.setParent(None)
 
         layout.addWidget(self.complexityButton)
+
+        if self.exportButton is None:
+            self.exportButton = QtWidgets.QPushButton('Export Report')
+            self.exportButton.clicked.connect(self.export_report)
+            self.exportButton.setEnabled(False)
+
+        if self.exportButton.parent() is not None:
+            self.exportButton.setParent(None)
+
+        layout.addWidget(self.exportButton)
 
         if self.complexityLayout is None:
             self.complexityLayout = QtWidgets.QVBoxLayout()
@@ -61,7 +73,17 @@ class ComplexityCalculator:
 
     def display_complexity(self, text):
         self.complexityWidget.setText(text)
+        self.exportButton.setEnabled(True)
         logging.debug('Displayed complexity results.')
+
+    def export_report(self):
+        options = QtWidgets.QFileDialog.Option()
+        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(None, "Save Report", "",
+                                                             "Text Files (*.txt);;All Files (*)", options=options)
+        if file_name:
+            with open(file_name, 'w') as file:
+                file.write(self.complexityWidget.toPlainText())
+            logging.debug(f'Report exported to {file_name}')
 
     @staticmethod
     def clearLayout(layout):
