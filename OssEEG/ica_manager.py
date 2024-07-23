@@ -1,5 +1,4 @@
 import logging
-
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 from PyQt6 import QtWidgets
@@ -22,6 +21,7 @@ class ICAManager:
         self.canvas = None
         self.dialogs = []
         self.patches = {}
+        self.ica_image_path = None  # Added this line
 
     def initUI(self, layout):
         self.icaButton = QtWidgets.QPushButton('Run ICA')
@@ -40,13 +40,14 @@ class ICAManager:
         self.eeg_analyzer.ica_thread.icaFinished.connect(self.handle_ica_finished)
         self.eeg_analyzer.ica_thread.start()
 
-    def handle_ica_finished(self, ica, ica_fig, axes):
+    def handle_ica_finished(self, ica, image_path, ica_fig):
         self.eeg_analyzer.ica = ica
+        self.ica_image_path = image_path  # Save the image path
         self.clearLayout(self.icaPlotLayout)
         self.canvas = FigureCanvas(ica_fig)
         self.icaPlotLayout.addWidget(self.canvas)
 
-        self.axes = [ax for sublist in axes for ax in sublist]
+        self.axes = ica_fig.axes
         for i, ax in enumerate(self.axes):
             ax.set_picker(True)  # Enable picking on the axes
             ax.figure.canvas.mpl_connect('pick_event', self.on_pick)

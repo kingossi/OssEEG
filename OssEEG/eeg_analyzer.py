@@ -169,6 +169,3 @@ class AnalysisWidget(QWidget):
             file_path = urls[0].toLocalFile()
             self.parent.file_loader.loadFile(file_path)
         event.acceptProposedAction()
-
-
-
