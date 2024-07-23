@@ -10,7 +10,6 @@ from OssEEG.ica_worker import ICAWorker
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
-
 class ICAManager:
     def __init__(self, eeg_analyzer):
         self.icaPlotLayout = None
@@ -21,7 +20,7 @@ class ICAManager:
         self.canvas = None
         self.dialogs = []
         self.patches = {}
-        self.ica_image_path = None  # Added this line
+        self.ica_image_path = None
 
     def initUI(self, layout):
         self.icaButton = QtWidgets.QPushButton('Run ICA')
@@ -40,9 +39,8 @@ class ICAManager:
         self.eeg_analyzer.ica_thread.icaFinished.connect(self.handle_ica_finished)
         self.eeg_analyzer.ica_thread.start()
 
-    def handle_ica_finished(self, ica, image_path, ica_fig):
+    def handle_ica_finished(self, ica, ica_fig):
         self.eeg_analyzer.ica = ica
-        self.ica_image_path = image_path  # Save the image path
         self.clearLayout(self.icaPlotLayout)
         self.canvas = FigureCanvas(ica_fig)
         self.icaPlotLayout.addWidget(self.canvas)

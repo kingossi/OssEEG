@@ -1,8 +1,10 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 from custom_complexity_calculator import CustomComplexityCalculator
+
+
 import logging
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.WARNING)
 
 class ComplexityWorker(QThread):
     complexityFinished = pyqtSignal(str)
