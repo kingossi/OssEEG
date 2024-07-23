@@ -7,10 +7,15 @@ import concurrent.futures
 class SpecparamWorker(QThread):
     specparamFinished = pyqtSignal(np.ndarray, np.ndarray, np.ndarray, np.ndarray)
 
-    def __init__(self, data, sf):
+    def __init__(self, data, sf, min_width, max_width, max_n_peaks, min_peak_height):
         super().__init__()
         self.data = data
         self.sf = sf
+        self.min_width = min_width
+        self.max_width = max_width
+        self.max_n_peaks = max_n_peaks
+        self.min_peak_height = min_peak_height
+        self.sm = None  # Add this attribute to store the SpectralModel
 
     def run(self):
         print("SpecparamWorker started")
@@ -40,10 +45,15 @@ class SpecparamWorker(QThread):
         freqs = np.asarray(freqs)
         psd = np.asarray(psd)
 
-        model = SpectralModel()
+        model = SpectralModel(peak_width_limits=[self.min_width, self.max_width],
+                              max_n_peaks=self.max_n_peaks,
+                              min_peak_height=self.min_peak_height)
         model.fit(freqs, psd)
         modeled_spectrum = model.modeled_spectrum_
         aperiodic_fit = model._ap_fit
         periodic_fit = modeled_spectrum - aperiodic_fit  # Extract periodic component
+
+        if self.sm is None:
+            self.sm = model  # Store the SpectralModel instance
 
         return freqs, modeled_spectrum, aperiodic_fit, periodic_fit

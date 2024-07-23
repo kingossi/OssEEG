@@ -1,6 +1,7 @@
 from PyQt6 import QtWidgets, QtGui
 from complexity_worker import ComplexityWorker
 import logging
+from PyQt6.QtWidgets import QFileDialog
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -76,10 +77,11 @@ class ComplexityCalculator:
         self.exportButton.setEnabled(True)
         logging.debug('Displayed complexity results.')
 
+
     def export_report(self):
-        options = QtWidgets.QFileDialog.Option()
-        file_name, _ = QtWidgets.QFileDialog.getSaveFileName(None, "Save Report", "",
-                                                             "Text Files (*.txt);;All Files (*)", options=options)
+        options = QFileDialog.Option.DontUseNativeDialog
+        file_name, _ = QFileDialog.getSaveFileName(None, "Save Report", "",
+                                                   "Text Files (*.txt);;All Files (*)", options=options)
         if file_name:
             with open(file_name, 'w') as file:
                 file.write(self.complexityWidget.toPlainText())

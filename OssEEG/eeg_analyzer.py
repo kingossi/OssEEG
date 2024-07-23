@@ -10,7 +10,6 @@ from file_loader import FileLoader
 from graph_manager import GraphManager
 from ica_manager import ICAManager
 
-
 class EEGAnalyzer(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -63,7 +62,7 @@ class EEGAnalyzer(QMainWindow):
         file_menu.addAction(load_file_action)
 
         # Adding Reporting to the menu
-        report_menu = menu_bar.addMenu('Report')
+        report_menu = menu_bar.addMenu('Export')
 
         generate_report_action = QtGui.QAction('Generate Report', self)
         generate_report_action.triggered.connect(self.showReportDialog)
@@ -131,6 +130,13 @@ class EEGAnalyzer(QMainWindow):
         layout.addLayout(reportBoxLayout)
         reportDialog.setLayout(layout)
         self.complexity_calculator.enable_complexity_button()  # Enable the button here
+
+        # Generate Specparam report if available
+        if self.graph_manager.specparamAnalysisPlot.sm is not None:
+            self.graph_manager.specparamAnalysisPlot.generate_report()
+        else:
+            print("No Specparam model available for report generation")
+
         reportDialog.show()  # Use show() instead of exec() to make the dialog non-blocking
 
     def loadData(self, raw, data, channel_names, sf):
@@ -141,7 +147,6 @@ class EEGAnalyzer(QMainWindow):
         self.channel_selector.populate_channel_selector()
         self.graph_manager.updateGraph()
         self.complexity_calculator.enable_complexity_button()  # Enable the button when data is loaded
-
 
 class AnalysisWidget(QWidget):
     def __init__(self, parent):
@@ -161,6 +166,3 @@ class AnalysisWidget(QWidget):
             file_path = urls[0].toLocalFile()
             self.parent.file_loader.loadFile(file_path)
         event.acceptProposedAction()
-
-
-

@@ -1,11 +1,10 @@
-import gc
-import hashlib
-
+import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtGui, QtCore
-
 from specparam_worker import SpecparamWorker
-
+from specparam import SpectralModel
+import hashlib
+import gc
 
 class SpecparamAnalysisPlot(QtWidgets.QWidget):
     def __init__(self):
@@ -27,9 +26,12 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         self.specparam_worker = None
         self.cache = {}
         self.selected_channels = []
+        self.sm = None  # Store the SpectralModel
 
     def initUI(self):
         layout = QtWidgets.QVBoxLayout()
+
+        # Create plot widget
         self.plotWidget = pg.GraphicsLayoutWidget()
         self.plotWidget.setBackground('w')
 
@@ -53,6 +55,31 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         self.aperiodic_curve = self.specparam_plot.plot(pen='g')
 
         layout.addWidget(self.plotWidget)
+
+        # Add Specparam options
+        options_layout = QtWidgets.QFormLayout()
+
+        self.min_width_input = QtWidgets.QLineEdit()
+        self.min_width_input.setValidator(QtGui.QIntValidator(1, 10))
+        self.min_width_input.setText("1")
+        options_layout.addRow('Min Peak Width:', self.min_width_input)
+
+        self.max_width_input = QtWidgets.QLineEdit()
+        self.max_width_input.setValidator(QtGui.QIntValidator(10, 100))
+        self.max_width_input.setText("50")
+        options_layout.addRow('Max Peak Width:', self.max_width_input)
+
+        self.max_n_peaks_input = QtWidgets.QLineEdit()
+        self.max_n_peaks_input.setValidator(QtGui.QIntValidator(1, 10))
+        self.max_n_peaks_input.setText("5")
+        options_layout.addRow('Max Number of Peaks:', self.max_n_peaks_input)
+
+        self.min_peak_height_input = QtWidgets.QLineEdit()
+        self.min_peak_height_input.setValidator(QtGui.QDoubleValidator(0.0, 10.0, 2))
+        self.min_peak_height_input.setText("0.1")
+        options_layout.addRow('Min Peak Height:', self.min_peak_height_input)
+
+        layout.addLayout(options_layout)
 
         # Add "Calculate Specparam" button
         self.calculateButton = QtWidgets.QPushButton('Calculate Specparam')
@@ -109,9 +136,17 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         self.psd_plot.clear()
         self.specparam_plot.clear()
 
-        # Create a unique hash for the data to use as a cache key
+        # Get user-defined FOOOF parameters
+        min_width = int(self.min_width_input.text())
+        max_width = int(self.max_width_input.text())
+        max_n_peaks = int(self.max_n_peaks_input.text())
+        min_peak_height = float(self.min_peak_height_input.text())
+
+        print(f"Using parameters: min_width={min_width}, max_width={max_width}, max_n_peaks={max_n_peaks}, min_peak_height={min_peak_height}")
+
+        # Create a unique hash for the data and parameters to use as a cache key
         data_hash = hashlib.md5(data.tobytes()).hexdigest()
-        cache_key = (data.shape, data_hash, sf)
+        cache_key = (data.shape, data_hash, sf, min_width, max_width, max_n_peaks, min_peak_height)
 
         print(f"Plotting with cache_key: {cache_key}")
 
@@ -121,7 +156,7 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
             self.update_plot(freqs, modeled_spectrum, aperiodic_fit, periodic_fit)
         else:
             print("Starting SpecparamWorker")
-            self.specparam_worker = SpecparamWorker(data, sf)
+            self.specparam_worker = SpecparamWorker(data, sf, min_width, max_width, max_n_peaks, min_peak_height)
             self.specparam_worker.specparamFinished.connect(self.update_plot_and_cache)
             self.specparam_worker.finished.connect(self.on_worker_finished)
             self.specparam_worker.start()
@@ -143,14 +178,21 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         data = self.specparam_worker.data
         sf = self.specparam_worker.sf
 
-        # Create a unique hash for the data to use as a cache key
+        # Get user-defined FOOOF parameters
+        min_width = int(self.min_width_input.text())
+        max_width = int(self.max_width_input.text())
+        max_n_peaks = int(self.max_n_peaks_input.text())
+        min_peak_height = float(self.min_peak_height_input.text())
+
+        # Create a unique hash for the data and parameters to use as a cache key
         data_hash = hashlib.md5(data.tobytes()).hexdigest()
-        cache_key = (data.shape, data_hash, sf)
+        cache_key = (data.shape, data_hash, sf, min_width, max_width, max_n_peaks, min_peak_height)
 
         print(f"Caching data with cache_key: {cache_key}")
 
         self.cache[cache_key] = (freqs, modeled_spectrum, aperiodic_fit, periodic_fit)
         self.update_plot(freqs, modeled_spectrum, aperiodic_fit, periodic_fit)
+        self.sm = self.specparam_worker.sm  # Store the SpectralModel
 
     def update_plot(self, freqs, modeled_spectrum, aperiodic_fit, periodic_fit):
         print("Updating plot")
@@ -185,4 +227,9 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
             raise ValueError("sampling frequency (sf) is not set")
         return self.eeg_analyzer.sf
 
-
+    def generate_report(self):
+        if self.sm is not None:
+            print("Generating Specparam report")
+            self.sm.report()
+        else:
+            print("No Specparam model available to generate report")
