@@ -8,7 +8,9 @@ from eeg_file_handler import EEGFileHandler
 from file_loader import FileLoader
 from graph_manager import GraphManager
 from ica_manager import ICAManager
+import logging
 
+logging.basicConfig(level=logging.WARNING)
 
 class EEGAnalyzer(QMainWindow):
     def __init__(self):

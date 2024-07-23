@@ -1,11 +1,11 @@
 from PyQt6 import QtWidgets, QtGui
 from OssEEG.report_selector import ReportSelectionDialog
 from complexity_worker import ComplexityWorker
+
+
 import logging
-from PyQt6.QtWidgets import QVBoxLayout
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
+logging.basicConfig(level=logging.WARNING)
 
 class ComplexityCalculator:
     def __init__(self, eeg_analyzer):

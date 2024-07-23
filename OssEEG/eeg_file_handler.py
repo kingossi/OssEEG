@@ -21,6 +21,11 @@ class EEGFileHandler:
             raise ValueError('Unsupported file format')
 
         self.raw.pick_types(meg=False, eeg=True)
+
+        # Set montage if no digitization points are found
+        if not self.raw.info['dig']:
+            montage = mne.channels.make_standard_montage('standard_1020')
+            self.raw.set_montage(montage)
+
         self.data = self.raw.get_data()  # Get data for all channels
         return self.raw, self.data
-

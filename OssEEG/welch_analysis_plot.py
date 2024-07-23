@@ -49,6 +49,13 @@ class WelchAnalysisPlot(QtWidgets.QWidget):
         main_layout.addLayout(right_layout, 1)
         self.setLayout(main_layout)
 
+        # Add the cursor line and text
+        self.cursor_line = pg.InfiniteLine(angle=90, movable=False, pen='b')
+        self.plotWidget.addItem(self.cursor_line)
+        self.cursor_text = pg.TextItem(color='k', anchor=(0, 1))
+        self.plotWidget.addItem(self.cursor_text)
+        self.plotWidget.scene().sigMouseClicked.connect(self.mouseClicked)
+
     def plot(self, data, sf):
         self.plotWidget.clear()
         self.histogramWidget.clear()
@@ -121,4 +128,28 @@ class WelchAnalysisPlot(QtWidgets.QWidget):
         self.histogramWidget.addItem(bg1)
         self.histogramWidget.getAxis('bottom').setTicks([[(i, band) for i, band in enumerate(bands)]])
 
+    def mouseClicked(self, event):
+        pos = event.scenePos()
+        if self.plotWidget.sceneBoundingRect().contains(pos):
+            mouse_point = self.plotWidget.plotItem.vb.mapSceneToView(pos)
+            x_value = mouse_point.x()
+            y_value = self.get_y_value(x_value)
+            print(f"Mouse clicked at x={x_value:.2f}, y={y_value}")
+            if y_value is not None:
+                self.cursor_line.setPos(x_value)
+                self.cursor_text.setText(f"({x_value:.2f}, {y_value:.2e})")
+                self.cursor_text.setPos(mouse_point)
+                self.cursor_text.show()
+                self.plotWidget.update()
 
+    def get_y_value(self, x_value):
+        curve = self.plotWidget.plotItem.curves[0]
+        data = curve.getData()
+        if data is not None:
+            x_data, y_data = data
+            idx = (np.abs(x_data - x_value)).argmin()
+            print(f"Closest index: {idx}, x_data: {x_data[idx]}, y_data: {y_data[idx]}")
+            if 0 <= idx < len(y_data):
+                return y_data[idx]
+        print("No data found")
+        return None
