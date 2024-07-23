@@ -33,6 +33,9 @@ class ChannelSelector:
         self.eeg_analyzer.graph_manager.updateGraph()
 
     def handleChannelSelectionChange(self):
+        selected_channels = [item.text() for item in self.channelSelector.selectedItems()]
+        self.eeg_analyzer.graph_manager.specparamAnalysisPlot.set_selected_channels(selected_channels)
+
         if self.selectAllCheckbox.isChecked() and not all(item.isSelected() for item in self.channelSelector.findItems("*", QtCore.Qt.MatchFlag.MatchWildcard)):
             self.selectAllCheckbox.blockSignals(True)
             self.selectAllCheckbox.setChecked(False)

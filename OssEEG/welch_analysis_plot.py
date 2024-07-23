@@ -20,13 +20,27 @@ class WelchAnalysisPlot(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout()
 
         self.plotWidget = pg.PlotWidget(title="Welch's Power Spectral Density")
+        self.plotWidget.setBackground('w')
+        self.plotWidget.getAxis('left').setPen('k')
+        self.plotWidget.getAxis('bottom').setPen('k')
+        self.plotWidget.getAxis('left').setTextPen('k')
+        self.plotWidget.getAxis('bottom').setTextPen('k')
+        self.plotWidget.showGrid(x=True, y=True, alpha=0.5)
         main_layout.addWidget(self.plotWidget, 3)
 
         right_layout = QtWidgets.QVBoxLayout()
+
         self.histogramWidget = pg.PlotWidget(title="Relative Band Distribution")
+        self.histogramWidget.setBackground('w')
+        self.histogramWidget.getAxis('left').setPen('k')
+        self.histogramWidget.getAxis('bottom').setPen('k')
+        self.histogramWidget.getAxis('left').setTextPen('k')
+        self.histogramWidget.getAxis('bottom').setTextPen('k')
+        self.histogramWidget.showGrid(x=True, y=True, alpha=0.5)
         right_layout.addWidget(self.histogramWidget, 1)
 
         self.tableWidget = QtWidgets.QTableWidget()
+        self.tableWidget.setStyleSheet("background-color: white;")
         self.tableWidget.setColumnWidth(1, 200)
         self.tableWidget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
@@ -39,7 +53,7 @@ class WelchAnalysisPlot(QtWidgets.QWidget):
         self.plotWidget.clear()
         self.histogramWidget.clear()
 
-        max_freq = 60     # Set maximum frequency to display
+        max_freq = 60  # Set maximum frequency to display
 
         if data.ndim == 2:  # Handle multi-channel data
             psd_all = []
@@ -106,3 +120,5 @@ class WelchAnalysisPlot(QtWidgets.QWidget):
         bg1 = pg.BarGraphItem(x=np.arange(len(bands)), height=values, width=0.6, brushes=brushes)
         self.histogramWidget.addItem(bg1)
         self.histogramWidget.getAxis('bottom').setTicks([[(i, band) for i, band in enumerate(bands)]])
+
+
