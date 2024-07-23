@@ -1,7 +1,8 @@
 from PyQt6 import QtWidgets, QtGui
+
 from complexity_worker import ComplexityWorker
 import logging
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QDialog, QVBoxLayout
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -77,15 +78,26 @@ class ComplexityCalculator:
         self.exportButton.setEnabled(True)
         logging.debug('Displayed complexity results.')
 
-
     def export_report(self):
-        options = QFileDialog.Option.DontUseNativeDialog
-        file_name, _ = QFileDialog.getSaveFileName(None, "Save Report", "",
-                                                   "Text Files (*.txt);;All Files (*)", options=options)
-        if file_name:
-            with open(file_name, 'w') as file:
-                file.write(self.complexityWidget.toPlainText())
-            logging.debug(f'Report exported to {file_name}')
+        dialog = ReportSelectionDialog(self.eeg_analyzer)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            include_complexity, include_specparam = dialog.getSelections()
+
+            report_content = ""
+            if include_complexity:
+                report_content += self.complexityWidget.toPlainText() + "\n\n"
+
+            if include_specparam:
+                specparam_report = self.eeg_analyzer.graph_manager.specparamAnalysisPlot.generate_specparam_report()
+                report_content += specparam_report + "\n\n"
+
+            options = QFileDialog.Option.DontUseNativeDialog
+            file_name, _ = QFileDialog.getSaveFileName(None, "Save Report", "",
+                                                       "Text Files (*.txt);;All Files (*)", options=options)
+            if file_name:
+                with open(file_name, 'w') as file:
+                    file.write(report_content)
+                logging.debug(f'Report exported to {file_name}')
 
     @staticmethod
     def clearLayout(layout):
@@ -93,3 +105,28 @@ class ComplexityCalculator:
             widget = layout.itemAt(i).widget()
             if widget is not None:
                 widget.setParent(None)
+
+
+class ReportSelectionDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Select Report Sections')
+        self.setGeometry(300, 300, 300, 200)
+        self.layout = QVBoxLayout()
+
+        self.complexityCheckBox = QtWidgets.QCheckBox('Include Complexity Results')
+        self.specparamCheckBox = QtWidgets.QCheckBox('Include Specparam Model')
+
+        self.layout.addWidget(self.complexityCheckBox)
+        self.layout.addWidget(self.specparamCheckBox)
+
+        self.buttonBox = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
+
+        self.layout.addWidget(self.buttonBox)
+        self.setLayout(self.layout)
+
+    def getSelections(self):
+        return self.complexityCheckBox.isChecked(), self.specparamCheckBox.isChecked()

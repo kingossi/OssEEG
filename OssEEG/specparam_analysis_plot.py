@@ -233,3 +233,23 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
             self.sm.report()
         else:
             print("No Specparam model available to generate report")
+
+    def generate_specparam_report(self):
+        if self.sm is not None:
+            from io import StringIO
+            import sys
+
+            old_stdout = sys.stdout
+            sys.stdout = mystdout = StringIO()
+
+            # Generate the report
+            self.sm.report()
+
+            # Reset stdout
+            sys.stdout = old_stdout
+
+            # Get the report content
+            report = mystdout.getvalue()
+            return report
+        else:
+            return "No Specparam model available.\n"

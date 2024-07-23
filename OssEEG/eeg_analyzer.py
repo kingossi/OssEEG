@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from PyQt6 import QtWidgets, QtGui, QtCore
 from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox, QDialog
@@ -9,6 +8,7 @@ from eeg_file_handler import EEGFileHandler
 from file_loader import FileLoader
 from graph_manager import GraphManager
 from ica_manager import ICAManager
+
 
 class EEGAnalyzer(QMainWindow):
     def __init__(self):
@@ -118,7 +118,9 @@ class EEGAnalyzer(QMainWindow):
         QMessageBox.about(self, "About", "OssEEG\nVersion 1.0\nDeveloped by Ossi (: ")
 
     def showTermsDialog(self):
-        QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license.\nFor more details, visit https://www.gnu.org/licenses/gpl-3.0.html")
+        QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license."
+                                                              "\nFor more details, visit "
+                                                              "https://www.gnu.org/licenses/gpl-3.0.html")
 
     def showReportDialog(self):
         reportDialog = QDialog(self)
@@ -148,6 +150,7 @@ class EEGAnalyzer(QMainWindow):
         self.graph_manager.updateGraph()
         self.complexity_calculator.enable_complexity_button()  # Enable the button when data is loaded
 
+
 class AnalysisWidget(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -166,3 +169,6 @@ class AnalysisWidget(QWidget):
             file_path = urls[0].toLocalFile()
             self.parent.file_loader.loadFile(file_path)
         event.acceptProposedAction()
+
+
+
