@@ -1,14 +1,19 @@
-import numpy as np
+import gc
+import hashlib
+
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtGui, QtCore
+
 from specparam_worker import SpecparamWorker
-from specparam import SpectralModel
-import hashlib
-import gc
+
 
 class SpecparamAnalysisPlot(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
+        self.min_peak_height_input = None
+        self.max_n_peaks_input = None
+        self.max_width_input = None
+        self.min_width_input = None
         self.proxyWidget = None
         self.overlayWidget = None
         self.overlayLayout = None
@@ -96,7 +101,7 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         self.loadingIcon.setVisible(False)  # Initially hidden
 
         # Set up the loading animation
-        self.movie = QtGui.QMovie('rotating_logo.gif')
+        self.movie = QtGui.QMovie('monki_v4.gif')
         self.movie.setScaledSize(QtCore.QSize(64, 64))  # Scale the GIF
         self.loadingIcon.setMovie(self.movie)
 
@@ -142,7 +147,8 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         max_n_peaks = int(self.max_n_peaks_input.text())
         min_peak_height = float(self.min_peak_height_input.text())
 
-        print(f"Using parameters: min_width={min_width}, max_width={max_width}, max_n_peaks={max_n_peaks}, min_peak_height={min_peak_height}")
+        print(f"Using parameters: min_width={min_width}, max_width={max_width}, max_n_peaks={max_n_peaks}, "
+              f"min_peak_height={min_peak_height}")
 
         # Create a unique hash for the data and parameters to use as a cache key
         data_hash = hashlib.md5(data.tobytes()).hexdigest()
