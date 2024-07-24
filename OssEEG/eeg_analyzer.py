@@ -2,12 +2,26 @@ import numpy as np
 from PyQt6 import QtWidgets, QtGui, QtCore
 from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox, QDialog
 
+from OssEEG.ml_manager import ModelManager
 from channel_selector import ChannelSelector
 from complexity_calculator import ComplexityCalculator
 from eeg_file_handler import EEGFileHandler
 from file_loader import FileLoader
 from graph_manager import GraphManager
 from ica_manager import ICAManager
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+
+from PyQt6 import QtWidgets, QtGui, QtCore
+import numpy as np
+from channel_selector import ChannelSelector
+from complexity_calculator import ComplexityCalculator
+from eeg_file_handler import EEGFileHandler
+from file_loader import FileLoader
+from graph_manager import GraphManager
+from ica_manager import ICAManager
+
 import logging
 
 logging.basicConfig(level=logging.WARNING)
@@ -29,6 +43,7 @@ class EEGAnalyzer(QMainWindow):
         self.graph_manager = GraphManager(self)
         self.ica_manager = ICAManager(self)
         self.complexity_calculator = ComplexityCalculator(self)
+        self.model_manager = ModelManager(self)  # Initialize ModelManager
         self.raw = None
         self.data = None
         self.channel_names = []  # Initialize channel_names
@@ -106,10 +121,23 @@ class EEGAnalyzer(QMainWindow):
 
         mainSplitter.addWidget(channelSelectWidget)
 
+        # Add Model Manager UI
+        modelWidget = QWidget()
+        modelLayout = QVBoxLayout(modelWidget)
+        modelGroupBox = QtWidgets.QGroupBox("Model")
+        modelLayout.addWidget(modelGroupBox)
+        modelBoxLayout = QVBoxLayout()
+        modelGroupBox.setLayout(modelBoxLayout)
+
+        self.model_manager.initUI(modelBoxLayout)
+
+        mainSplitter.addWidget(modelWidget)
+
         # Set initial sizes
         mainSplitter.setStretchFactor(0, 1)
         mainSplitter.setStretchFactor(1, 5)
         mainSplitter.setStretchFactor(2, 1)
+        mainSplitter.setStretchFactor(3, 1)
 
         layout.addWidget(mainSplitter)
 
@@ -151,6 +179,7 @@ class EEGAnalyzer(QMainWindow):
         self.channel_selector.populate_channel_selector()
         self.graph_manager.updateGraph()
         self.complexity_calculator.enable_complexity_button()  # Enable the button when data is loaded
+
 
 
 class AnalysisWidget(QWidget):

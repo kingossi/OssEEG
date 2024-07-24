@@ -1,7 +1,5 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 from custom_complexity_calculator import CustomComplexityCalculator
-
-
 import logging
 
 logging.basicConfig(level=logging.WARNING)
@@ -43,6 +41,27 @@ class ComplexityWorker(QThread):
 
         dfa_df = calculator.detrended_fluctuation_analysis()
         logging.debug('Finished detrended fluctuation analysis calculations.')
+
+        # Calculate averages for each measure
+        avg_apen = apen_df.mean().values[0]
+        avg_pe = pe_df.mean().values[0]
+        avg_se = se_df.mean().values[0]
+        avg_svd_entropy = svd_entropy_df.mean().values[0]
+        avg_sampen = sampen_df.mean().values[0]
+        avg_hfd = hfd_df.mean().values[0]
+        avg_dfa = dfa_df.mean().values[0]
+
+        # Append averages to the text
+        text += "Averages:\n"
+        text += "--------------------------------\n"
+        text += f"- Average Approximate Entropy: {avg_apen:.6f}\n"
+        text += f"- Average Permutation Entropy: {avg_pe:.6f}\n"
+        text += f"- Average Spectral Entropy: {avg_se:.6f}\n"
+        text += f"- Average SVD Entropy: {avg_svd_entropy:.6f}\n"
+        text += f"- Average Sample Entropy: {avg_sampen:.6f}\n"
+        text += f"- Average Higuchi Fractal Dimension: {avg_hfd:.6f}\n"
+        text += f"- Average Detrended Fluctuation Analysis: {avg_dfa:.6f}\n"
+        text += "\n"
 
         for channel in self.channel_names:
             text += f"Channel: {channel}\n"
