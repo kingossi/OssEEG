@@ -1,7 +1,9 @@
 import logging
+
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+
+import logging
 import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QVBoxLayout, QWidget, QDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mne.viz import plot_ica_properties
@@ -10,8 +12,18 @@ from OssEEG.ica_worker import ICAWorker
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
-class ICAManager:
+import logging
+import matplotlib.pyplot as plt
+from PyQt6 import QtCore, QtGui, QtWidgets
+
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+
+
+
+
+class ICAManager(QtWidgets.QWidget):
     def __init__(self, eeg_analyzer):
+        super().__init__()
         self.icaPlotLayout = None
         self.icaButton = None
         self.eeg_analyzer = eeg_analyzer
@@ -21,6 +33,9 @@ class ICAManager:
         self.dialogs = []
         self.patches = {}
         self.ica_image_path = None
+        self.loadingLabel = None
+        self.loadingIcon = None
+        self.movie = None
 
     def initUI(self, layout):
         self.icaButton = QtWidgets.QPushButton('Run ICA')
@@ -31,15 +46,43 @@ class ICAManager:
         self.icaPlotLayout = QVBoxLayout()
         layout.addLayout(self.icaPlotLayout)
 
+        # Add "Calculating..." label and loading animation
+        self.loadingLabel = QtWidgets.QLabel("Calculating...")
+        self.loadingLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.loadingLabel.setVisible(False)  # Initially hidden
+
+        self.loadingIcon = QtWidgets.QLabel()
+        self.loadingIcon.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.loadingIcon.setVisible(False)  # Initially hidden
+
+        # Set up the loading animation
+        self.movie = QtGui.QMovie('monki_v4.gif')
+        self.movie.setScaledSize(QtCore.QSize(64, 64))  # Scale the GIF
+        self.loadingIcon.setMovie(self.movie)
+
+        # Create a layout for the overlay widget
+        self.overlayLayout = QtWidgets.QVBoxLayout()
+        self.overlayLayout.addWidget(self.loadingLabel)
+        self.overlayLayout.addWidget(self.loadingIcon)
+
+        # Create a widget for the overlay
+        self.overlayWidget = QtWidgets.QWidget()
+        self.overlayWidget.setLayout(self.overlayLayout)
+        self.overlayWidget.setVisible(False)  # Initially hidden
+
+        layout.addWidget(self.overlayWidget)
+
     def enable_ica_button(self):
         self.icaButton.setEnabled(True)
 
     def run_ica(self):
+        self.show_loading_indicator()
         self.eeg_analyzer.ica_thread = ICAWorker(self.eeg_analyzer.raw)
         self.eeg_analyzer.ica_thread.icaFinished.connect(self.handle_ica_finished)
         self.eeg_analyzer.ica_thread.start()
 
     def handle_ica_finished(self, ica, ica_fig):
+        self.hide_loading_indicator()
         self.eeg_analyzer.ica = ica
         self.clearLayout(self.icaPlotLayout)
         self.canvas = FigureCanvas(ica_fig)
@@ -51,6 +94,18 @@ class ICAManager:
             ax.figure.canvas.mpl_connect('pick_event', self.on_pick)
 
         self.show_ica_exclusion_ui()
+
+    def show_loading_indicator(self):
+        self.loadingLabel.setVisible(True)
+        self.loadingIcon.setVisible(True)
+        self.overlayWidget.setVisible(True)
+        self.movie.start()
+
+    def hide_loading_indicator(self):
+        self.loadingLabel.setVisible(False)
+        self.loadingIcon.setVisible(False)
+        self.overlayWidget.setVisible(False)
+        self.movie.stop()
 
     def on_pick(self, event):
         ax = event.artist.axes
@@ -123,3 +178,4 @@ class ICAManager:
             widget = layout.itemAt(i).widget()
             if widget is not None:
                 widget.setParent(None)
+

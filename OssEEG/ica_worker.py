@@ -9,7 +9,7 @@ logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
 
 class ICAWorker(QtCore.QThread):
-    icaFinished = QtCore.pyqtSignal(object, object, str)
+    icaFinished = QtCore.pyqtSignal(object, object)
 
     def __init__(self, raw, parent=None):
         super().__init__(parent)
@@ -33,9 +33,5 @@ class ICAWorker(QtCore.QThread):
         fig, axes = plt.subplots(3, 5, figsize=(15, 9))
         ica.plot_components(show=False, axes=axes)
 
-        # Save the figure
-        image_path = "ica_components.png"
-        fig.savefig(image_path)
-        plt.close(fig)
-
-        self.icaFinished.emit(ica, fig, image_path)
+        # Emit the ICA object and the figure
+        self.icaFinished.emit(ica, fig)
