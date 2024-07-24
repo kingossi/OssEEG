@@ -46,7 +46,7 @@ class GraphManager:
             self.eeg_analyzer.ica_manager.enable_ica_button()
         elif current_graph == "Specparam Analysis":
             self.graphLayout.addWidget(self.specparamAnalysisPlot)
-            # Do not plot here, wait for button click to trigger the plot
+            # if you want to plot immediately here, remove this
             self.eeg_analyzer.complexity_calculator.enable_complexity_button()
             self.eeg_analyzer.ica_manager.enable_ica_button()
         elif current_graph == "Multitaper PSD":

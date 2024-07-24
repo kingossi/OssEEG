@@ -96,7 +96,7 @@ class SpecparamAnalysisPlot(QtWidgets.QWidget):
         self.loadingIcon.setVisible(False)  # Initially hidden
 
         # Set up the loading animation
-        self.movie = QtGui.QMovie('loading.gif')
+        self.movie = QtGui.QMovie('rotating_logo.gif')
         self.movie.setScaledSize(QtCore.QSize(64, 64))  # Scale the GIF
         self.loadingIcon.setMovie(self.movie)
 

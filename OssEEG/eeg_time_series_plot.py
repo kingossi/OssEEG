@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 import pyqtgraph as pg
 from PyQt6 import QtWidgets, QtGui, QtCore
@@ -14,6 +13,7 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         self.channel_names = None
         self.max_display_channels = 20
         self.isScrollMode = True
+        self.regions = []
 
     def initUI(self):
         layout = QtWidgets.QVBoxLayout()
@@ -37,8 +37,18 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         self.toggleButton.setFixedSize(200, 50)
         self.toggleButton.clicked.connect(self.toggleMode)
 
+        self.addRegionButton = QtWidgets.QPushButton("Add Artifact Region")
+        self.addRegionButton.setFixedSize(200, 50)
+        self.addRegionButton.clicked.connect(self.addRegion)
+
+        self.removeRegionsButton = QtWidgets.QPushButton("Interpolate Artifact Regions")
+        self.removeRegionsButton.setFixedSize(200, 50)
+        self.removeRegionsButton.clicked.connect(self.removeRegions)
+
         layout.addWidget(self.plotWidget)
         layout.addWidget(self.toggleButton)
+        layout.addWidget(self.addRegionButton)
+        layout.addWidget(self.removeRegionsButton)
         self.setLayout(layout)
 
     def toggleMode(self):
@@ -50,10 +60,45 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
             self.toggleButton.setText("Switch to Zoom/Pan Mode")
         self.isScrollMode = not self.isScrollMode
 
+    def addRegion(self):
+        region = pg.LinearRegionItem()
+        self.plotWidget.addItem(region)
+        self.regions.append(region)
+
+    def removeRegions(self):
+        for region in self.regions:
+            self.interpolateArtifactRegion(region.getRegion())
+            self.plotWidget.removeItem(region)
+        self.regions = []
+        self.updatePlot(self.selected_channel_names)  # Refresh the plot with updated data
+
+    def interpolateArtifactRegion(self, region):
+        start, end = region
+        start_idx = int(start * self.sf)
+        end_idx = int(end * self.sf)
+        for ch_idx in range(self.data.shape[0]):
+            self.data[ch_idx, start_idx:end_idx] = self.interpolate(self.data[ch_idx, :], start_idx, end_idx)
+
+    def interpolate(self, data, start_idx, end_idx):
+        """Linearly interpolate the data between start_idx and end_idx."""
+        if start_idx == 0:
+            start_val = data[end_idx]
+        else:
+            start_val = data[start_idx - 1]
+
+        if end_idx == len(data):
+            end_val = data[start_idx - 1]
+        else:
+            end_val = data[end_idx]
+
+        interp_values = np.linspace(start_val, end_val, end_idx - start_idx)
+        return interp_values
+
     def plot(self, data, sf, channel_names, selected_channels):
         self.data = data
         self.sf = sf
         self.channel_names = channel_names
+        self.selected_channel_names = selected_channels
         self.updatePlot(selected_channels)
 
     def updatePlot(self, selected_channels):
@@ -66,7 +111,7 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         time = np.arange(self.data.shape[1]) / self.sf
         offset = 0
         self.curves = []
-        max_amplitude = np.max(np.abs(self.data))  # Max amplitude for scaling
+        max_amplitude = np.nanmax(np.abs(self.data))  # Max amplitude for scaling
         margin = max_amplitude  # Add margin at the bottom
 
         for i, ch_name in enumerate(selected_channels):
@@ -85,4 +130,3 @@ class EEGTimeSeriesPlot(QtWidgets.QWidget):
         # Label each channel on the y-axis
         yticks = [(i * max_amplitude * 2 + margin, ch) for i, ch in enumerate(selected_channels)]
         self.plotWidget.getAxis('left').setTicks([yticks])
-
