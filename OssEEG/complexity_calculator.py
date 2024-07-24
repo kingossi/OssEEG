@@ -30,7 +30,7 @@ class ComplexityCalculator:
         if self.exportButton is None:
             self.exportButton = QtWidgets.QPushButton('Export Report')
             self.exportButton.clicked.connect(self.show_export_dialog)
-            self.exportButton.setEnabled(False)
+            self.exportButton.setEnabled(True)
 
         if self.exportButton.parent() is not None:
             self.exportButton.setParent(None)

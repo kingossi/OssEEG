@@ -7,6 +7,7 @@ import mne
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
+
 class ICAWorker(QtCore.QThread):
     icaFinished = QtCore.pyqtSignal(object, object)
 
