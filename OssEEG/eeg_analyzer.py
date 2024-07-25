@@ -145,7 +145,7 @@ class EEGAnalyzer(QMainWindow):
         self.show()
 
     def showAboutDialog(self):
-        QMessageBox.about(self, "About", "OssEEG\nVersion 1.0\nDeveloped by Ossi (: ")
+        QMessageBox.about(self, "About", "OssEEG\nVersion 1.0\nDeveloped by Ossi (: \nLoading gif created by Mark Kuznetsov")
 
     def showTermsDialog(self):
         QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license."
