@@ -1,7 +1,8 @@
-import numpy as np
 import logging
-from PyQt6 import QtWidgets
+
 import joblib  # Use joblib for loading the scikit-learn model
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QTextEdit
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -12,6 +13,7 @@ class ModelManager:
         self.model = None
         self.modelButton = None
         self.predictButton = None
+        self.predictionTextEdit = None  # Add this for displaying predictions
 
     def initUI(self, layout):
         self.modelButton = QtWidgets.QPushButton('Load Model')
@@ -22,6 +24,10 @@ class ModelManager:
         self.predictButton.clicked.connect(self.predict_events)
         self.predictButton.setEnabled(False)
         layout.addWidget(self.predictButton)
+
+        self.predictionTextEdit = QTextEdit()
+        self.predictionTextEdit.setReadOnly(True)  # this is needed for copy paste (i think)
+        layout.addWidget(self.predictionTextEdit)
 
     def load_model(self):
         file_name, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Load Model", "",
@@ -42,13 +48,14 @@ class ModelManager:
 
         # Prepare data for prediction
         data = self.eeg_analyzer.data
-        data = data.reshape(data.shape[0], -1)  # Flatten the data if needed
+        data = data.reshape(data.shape[0], -1)
+        if data.shape[1] > 29049:
+            data = data[:, :29049]  #hardcoded bug fix, should look into this
         predictions = self.model.predict(data)
 
         self.display_predictions(predictions)
 
     def display_predictions(self, predictions):
-        # Implement how to display predictions
-        # For example, print them or display in a text widget
+
         prediction_text = "\n".join(f"Epoch {i}: {pred}" for i, pred in enumerate(predictions))
-        QtWidgets.QMessageBox.information(None, "Predictions", prediction_text)
+        self.predictionTextEdit.setText(prediction_text)

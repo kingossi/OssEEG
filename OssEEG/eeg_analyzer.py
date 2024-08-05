@@ -1,15 +1,8 @@
-import numpy as np
-from PyQt6 import QtWidgets, QtGui, QtCore
+import logging
+
 from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox, QDialog
 
 from OssEEG.ml_manager import ModelManager
-from channel_selector import ChannelSelector
-from complexity_calculator import ComplexityCalculator
-from eeg_file_handler import EEGFileHandler
-from file_loader import FileLoader
-from graph_manager import GraphManager
-from ica_manager import ICAManager
-import logging
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -25,6 +18,7 @@ from ica_manager import ICAManager
 import logging
 
 logging.basicConfig(level=logging.WARNING)
+
 
 class EEGAnalyzer(QMainWindow):
     def __init__(self):
@@ -95,6 +89,9 @@ class EEGAnalyzer(QMainWindow):
         preprocBoxLayout = QVBoxLayout()
         preprocGroupBox.setLayout(preprocBoxLayout)
 
+        # Add Preprocessing Buttons
+        self.add_preprocessing_buttons(preprocBoxLayout)
+
         self.ica_manager.initUI(preprocBoxLayout)
 
         mainSplitter.addWidget(preprocWidget)
@@ -144,8 +141,49 @@ class EEGAnalyzer(QMainWindow):
         self.setCentralWidget(central_widget)
         self.show()
 
+    def add_preprocessing_buttons(self, layout):
+        # Low-pass filter button
+        low_pass_button = QtWidgets.QPushButton('Low-Pass Filter')
+        low_pass_button.clicked.connect(self.apply_low_pass_filter)
+        layout.addWidget(low_pass_button)
+
+        # High-pass filter button
+        high_pass_button = QtWidgets.QPushButton('High-Pass Filter')
+        high_pass_button.clicked.connect(self.apply_high_pass_filter)
+        layout.addWidget(high_pass_button)
+
+        # Custom filter button
+        custom_filter_button = QtWidgets.QPushButton('Custom Filter')
+        custom_filter_button.clicked.connect(self.apply_custom_filter)
+        layout.addWidget(custom_filter_button)
+
+    def apply_low_pass_filter(self):
+        if self.raw is not None:
+            self.raw.filter(None, 40., fir_design='firwin')
+            self.data = self.raw.get_data()
+            self.graph_manager.updateGraph()
+
+    def apply_high_pass_filter(self):
+        if self.raw is not None:
+            self.raw.filter(1., None, fir_design='firwin')
+            self.data = self.raw.get_data()
+            self.graph_manager.updateGraph()
+
+    def apply_custom_filter(self):
+        if self.raw is not None:
+            low_cutoff, ok1 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter Low Cutoff Frequency:", 1.0, 0, 1000, 2)
+            high_cutoff, ok2 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter High Cutoff Frequency:", 40.0, 0, 1000, 2)
+            if ok1 and ok2:
+                self.raw.filter(low_cutoff, high_cutoff, fir_design='firwin')
+                self.data = self.raw.get_data()
+                self.graph_manager.updateGraph()
+
+
+
+
     def showAboutDialog(self):
-        QMessageBox.about(self, "About", "OssEEG\nVersion 1.0\nDeveloped by Ossi (: \nLoading gif created by Mark Kuznetsov")
+        QMessageBox.about(self, "About",
+                          "OssEEG\nVersion 1.0\nDeveloped by Ossi (: \nLoading gif created by Mark Kuznetsov")
 
     def showTermsDialog(self):
         QMessageBox.information(self, "Terms and Conditions", "This software is licensed under the GPL license."
@@ -179,7 +217,6 @@ class EEGAnalyzer(QMainWindow):
         self.channel_selector.populate_channel_selector()
         self.graph_manager.updateGraph()
         self.complexity_calculator.enable_complexity_button()  # Enable the button when data is loaded
-
 
 
 class AnalysisWidget(QWidget):
