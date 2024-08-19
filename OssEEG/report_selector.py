@@ -10,16 +10,18 @@ class ReportSelectionDialog(QDialog):
         super().__init__(parent)
         self.eeg_analyzer = eeg_analyzer
         self.setWindowTitle('Select Report Sections')
-        self.setGeometry(300, 300, 300, 200)
+        self.setGeometry(300, 300, 300, 250)  # Adjust height to fit the new checkbox
         self.layout = QVBoxLayout()
 
         self.complexityCheckBox = QtWidgets.QCheckBox('Include Complexity Results')
         self.specparamCheckBox = QtWidgets.QCheckBox('Include Specparam Model')
         self.icaCheckBox = QtWidgets.QCheckBox('Include ICA Components')
+        self.kurtosisCheckBox = QtWidgets.QCheckBox('Include Kurtosis Results')  # New checkbox for kurtosis
 
         self.layout.addWidget(self.complexityCheckBox)
         self.layout.addWidget(self.specparamCheckBox)
         self.layout.addWidget(self.icaCheckBox)
+        self.layout.addWidget(self.kurtosisCheckBox)  # Add the kurtosis checkbox to the layout
 
         self.buttonBox = QtWidgets.QDialogButtonBox(
             QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
@@ -30,10 +32,11 @@ class ReportSelectionDialog(QDialog):
         self.setLayout(self.layout)
 
     def getSelections(self):
-        return self.complexityCheckBox.isChecked(), self.specparamCheckBox.isChecked(), self.icaCheckBox.isChecked()
+        return (self.complexityCheckBox.isChecked(), self.specparamCheckBox.isChecked(),
+                self.icaCheckBox.isChecked(), self.kurtosisCheckBox.isChecked())
 
     def export_report(self):
-        include_complexity, include_specparam, include_ica = self.getSelections()
+        include_complexity, include_specparam, include_ica, include_kurtosis = self.getSelections()
 
         report_content = "<html><head><title>EEG Analysis Report</title></head><body>"
         if include_complexity:
@@ -47,6 +50,12 @@ class ReportSelectionDialog(QDialog):
         if include_ica and self.eeg_analyzer.ica_manager.ica_image_path:
             report_content += "<h2>ICA Components:</h2>"
             report_content += f"<img src='{self.eeg_analyzer.ica_manager.ica_image_path}' alt='ICA Components'><br>"
+
+        if include_kurtosis:
+            kurtosis_values = self.eeg_analyzer.calculate_kurtosis()
+            if kurtosis_values is not None:
+                kurtosis_text = "\n".join([f"{ch_name}: {kurt_value:.4f}" for ch_name, kurt_value in zip(self.eeg_analyzer.channel_names, kurtosis_values)])
+                report_content += "<h2>Kurtosis Results:</h2><pre>" + kurtosis_text + "</pre><br>"
 
         report_content += "</body></html>"
 

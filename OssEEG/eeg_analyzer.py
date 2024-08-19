@@ -14,6 +14,7 @@ from eeg_file_handler import EEGFileHandler
 from file_loader import FileLoader
 from graph_manager import GraphManager
 from ica_manager import ICAManager
+from scipy.stats import kurtosis
 
 import logging
 
@@ -142,20 +143,29 @@ class EEGAnalyzer(QMainWindow):
         self.show()
 
     def add_preprocessing_buttons(self, layout):
+        # Create a container widget for the buttons
+        button_container = QWidget()
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
+        button_layout.setSpacing(5)  # Small spacing between buttons
+
         # Low-pass filter button
         low_pass_button = QtWidgets.QPushButton('Low-Pass Filter')
         low_pass_button.clicked.connect(self.apply_low_pass_filter)
-        layout.addWidget(low_pass_button)
+        button_layout.addWidget(low_pass_button)
 
         # High-pass filter button
         high_pass_button = QtWidgets.QPushButton('High-Pass Filter')
         high_pass_button.clicked.connect(self.apply_high_pass_filter)
-        layout.addWidget(high_pass_button)
+        button_layout.addWidget(high_pass_button)
 
         # Custom filter button
         custom_filter_button = QtWidgets.QPushButton('Custom Filter')
         custom_filter_button.clicked.connect(self.apply_custom_filter)
-        layout.addWidget(custom_filter_button)
+        button_layout.addWidget(custom_filter_button)
+
+        # Add the container widget to the main layout
+        layout.addWidget(button_container, alignment=QtCore.Qt.AlignmentFlag.AlignTop)
 
     def apply_low_pass_filter(self):
         if self.raw is not None:
@@ -178,7 +188,16 @@ class EEGAnalyzer(QMainWindow):
                 self.data = self.raw.get_data()
                 self.graph_manager.updateGraph()
 
-
+    def calculate_kurtosis(self):
+        if self.data is not None:
+            # Calculate kurtosis for each channel
+            kurtosis_values = kurtosis(self.data, axis=1, fisher=False)
+            for ch_name, kurt_value in zip(self.channel_names, kurtosis_values):
+                print(f"Kurtosis for {ch_name}: {kurt_value:.4f}")
+            return kurtosis_values
+        else:
+            QMessageBox.warning(self, "No Data", "No EEG data available for kurtosis calculation.")
+            return None
 
 
     def showAboutDialog(self):
