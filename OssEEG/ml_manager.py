@@ -35,8 +35,11 @@ class ModelManager:
         if file_name:
             try:
                 self.model = joblib.load(file_name)  # Load scikit-learn model
-                self.predictButton.setEnabled(True)
-                logging.info(f"Model loaded from {file_name}")
+                if self.predictButton is not None:
+                    self.predictButton.setEnabled(True)
+                    logging.info(f"Model loaded from {file_name}")
+                else:
+                    logging.error("predictButton is not initialized.")
             except Exception as e:
                 logging.error(f"Failed to load model: {e}")
                 QtWidgets.QMessageBox.critical(None, "Error", "Failed to load model.")
@@ -59,3 +62,20 @@ class ModelManager:
 
         prediction_text = "\n".join(f"Epoch {i}: {pred}" for i, pred in enumerate(predictions))
         self.predictionTextEdit.setText(prediction_text)
+
+    def predict(self, data):
+        if self.model is None:
+            logging.error("No model is loaded. Cannot predict.")
+            return None
+
+        # Prepare the data (reshape or normalize if needed)
+        data = data.reshape(data.shape[0], -1)
+        if data.shape[1] > 29049:
+            data = data[:, :29049]  # Hardcoded bug fix, should look into this
+
+        try:
+            predictions = self.model.predict(data)
+            return predictions
+        except Exception as e:
+            logging.error(f"Prediction failed: {e}")
+            return None

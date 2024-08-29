@@ -9,6 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from mne.viz import plot_ica_properties
 
 from OssEEG.ica_worker import ICAWorker
+import matplotlib.gridspec as gridspec
 
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
@@ -146,22 +147,47 @@ class ICAManager(QtWidgets.QWidget):
         exclusionLayout.addWidget(excludeButton)
         self.icaPlotLayout.addWidget(exclusionWidget)
 
+
     def plot_selected_ica_properties(self):
         selected_indices = list(self.selected_components)
         for index in selected_indices:
-            dialog = QDialog()
+            dialog = QDialog(self)  # Ensure the dialog is a child of the main window
             dialog.setWindowTitle(f"ICA Component {index} Properties")
-            dialog.setGeometry(100, 100, 800, 600)
+            dialog.setGeometry(100, 100, 1200, 800)  # Set a wider window size for better visibility
+
+            # Set up a vertical layout for the dialog
             layout = QVBoxLayout(dialog)
 
-            fig, axes = plt.subplots(1, 5, figsize=(15, 3))
-            plot_ica_properties(self.eeg_analyzer.ica, self.eeg_analyzer.raw, picks=[index], axes=axes)
+            # Create a gridspec layout with 2 rows and 5 columns
+            fig = plt.figure(figsize=(18, 8))
+            gs = gridspec.GridSpec(2, 5, height_ratios=[1, 0.5])  # More height for the first row, less for the bottom
 
+            # Plot ICA properties on the first row (5 subplots)
+            axes = [fig.add_subplot(gs[0, i]) for i in range(5)]
+            plot_ica_properties(self.eeg_analyzer.ica, self.eeg_analyzer.raw, picks=[index], axes=axes, show=False)
+
+            # Plot the EEG trace on the entire bottom row (single subplot spanning all columns)
+            ax_eeg_trace = fig.add_subplot(gs[1, :])  # Single subplot spanning all columns
+            times = self.eeg_analyzer.raw.times  # Get the time points
+            ica_sources = self.eeg_analyzer.ica.get_sources(self.eeg_analyzer.raw).get_data()  # Get ICA sources data
+
+            ax_eeg_trace.plot(times, ica_sources[index], 'r')  # Plot the EEG trace for the selected component
+            ax_eeg_trace.set_title('EEG Trace for Component {}'.format(index))
+            ax_eeg_trace.set_xlabel('Time (s)')
+            ax_eeg_trace.set_ylabel('Amplitude (µV)')
+
+            # Adjust layout to prevent overlapping and make it visually appealing
+            plt.tight_layout()
+
+            # Embed the Matplotlib figure inside the QDialog
             canvas = FigureCanvas(fig)
             layout.addWidget(canvas)
 
+            # Store the dialog reference to prevent it from being garbage-collected
             self.dialogs.append(dialog)
-            dialog.show()
+
+            # Display the dialog
+            dialog.exec()  # Use exec() to block and show the dialog as a modal window
 
     def exclude_selected_ica(self):
         self.eeg_analyzer.ica_exclude = list(self.selected_components)

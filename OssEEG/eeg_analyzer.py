@@ -1,5 +1,6 @@
 import logging
 
+import joblib
 from PyQt6.QtWidgets import QMainWindow, QSplitter, QVBoxLayout, QWidget, QMessageBox, QDialog
 
 from OssEEG.ml_manager import ModelManager
@@ -24,6 +25,7 @@ logging.basicConfig(level=logging.WARNING)
 class EEGAnalyzer(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.predictButton = None
         self.sf = 128.  # default sampling frequency
         self.band_d = {'Infra': [-np.inf, 0.1],
                        'Delta': [0.1, 4.],
@@ -38,10 +40,10 @@ class EEGAnalyzer(QMainWindow):
         self.graph_manager = GraphManager(self)
         self.ica_manager = ICAManager(self)
         self.complexity_calculator = ComplexityCalculator(self)
-        self.model_manager = ModelManager(self)  # Initialize ModelManager
         self.raw = None
         self.data = None
         self.channel_names = []  # Initialize channel_names
+        self.model_manager = ModelManager(self)  # Initialize ModelManager
         self.initUI()
 
     def initUI(self):
@@ -51,12 +53,14 @@ class EEGAnalyzer(QMainWindow):
         # Set the window icon
         self.setWindowIcon(QtGui.QIcon('logo.png'))
 
+        # Create the central widget and main layout
         central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(central_widget)
 
+        # Create the menu bar
         menu_bar = self.menuBar()
 
-        # Adding logo to the menu bar
+        # Info menu
         logo_menu = menu_bar.addMenu('Info')
 
         about_action = QtGui.QAction('About', self)
@@ -67,78 +71,90 @@ class EEGAnalyzer(QMainWindow):
         terms_action.triggered.connect(self.showTermsDialog)
         logo_menu.addAction(terms_action)
 
+        # File menu
         file_menu = menu_bar.addMenu('File')
 
         load_file_action = QtGui.QAction('Load EEG File', self)
         load_file_action.triggered.connect(self.file_loader.loadFile)
         file_menu.addAction(load_file_action)
 
-        # Adding Reporting to the menu
+        # Export menu
         report_menu = menu_bar.addMenu('Export')
 
         generate_report_action = QtGui.QAction('Generate Report', self)
         generate_report_action.triggered.connect(self.showReportDialog)
         report_menu.addAction(generate_report_action)
 
-        mainSplitter = QSplitter(QtCore.Qt.Orientation.Horizontal)
-        mainSplitter.setOpaqueResize(False)
+        # Model menu
+        model_menu = menu_bar.addMenu('Model')
 
-        preprocWidget = QWidget()
-        preprocLayout = QVBoxLayout(preprocWidget)
-        preprocGroupBox = QtWidgets.QGroupBox("Preprocessing")
-        preprocLayout.addWidget(preprocGroupBox)
-        preprocBoxLayout = QVBoxLayout()
-        preprocGroupBox.setLayout(preprocBoxLayout)
+        # Add actions for the Model menu
+        load_model_action = QtGui.QAction('Load Model', self)
+        load_model_action.triggered.connect(self.load_model)  # Calls load_model method
+        model_menu.addAction(load_model_action)
+
+        predict_events_action = QtGui.QAction('Predict Events', self)
+        predict_events_action.triggered.connect(self.predict_events)  # Calls predict_events method
+        model_menu.addAction(predict_events_action)
+
+        # Main Splitter to divide the main window horizontally
+        main_splitter = QSplitter(QtCore.Qt.Orientation.Horizontal)
+        main_splitter.setOpaqueResize(False)
+
+        # Preprocessing widget
+        preproc_widget = QWidget()
+        preproc_layout = QVBoxLayout(preproc_widget)
+        preproc_group_box = QtWidgets.QGroupBox("Preprocessing")
+        preproc_layout.addWidget(preproc_group_box)
+        preproc_box_layout = QVBoxLayout()
+        preproc_group_box.setLayout(preproc_box_layout)
 
         # Add Preprocessing Buttons
-        self.add_preprocessing_buttons(preprocBoxLayout)
+        self.add_preprocessing_buttons(preproc_box_layout)
 
-        self.ica_manager.initUI(preprocBoxLayout)
+        # Initialize ICA Manager UI
+        self.ica_manager.initUI(preproc_box_layout)
 
-        mainSplitter.addWidget(preprocWidget)
+        # Add preprocessing widget to splitter
+        main_splitter.addWidget(preproc_widget)
 
-        analysisWidget = AnalysisWidget(self)
-        analysisLayout = QVBoxLayout(analysisWidget)
-        analysisGroupBox = QtWidgets.QGroupBox("Data Analysis")
-        analysisLayout.addWidget(analysisGroupBox)
-        analysisBoxLayout = QVBoxLayout()
-        analysisGroupBox.setLayout(analysisBoxLayout)
+        # Data Analysis widget
+        analysis_widget = AnalysisWidget(self)
+        analysis_layout = QVBoxLayout(analysis_widget)
+        analysis_group_box = QtWidgets.QGroupBox("Data Analysis")
+        analysis_layout.addWidget(analysis_group_box)
+        analysis_box_layout = QVBoxLayout()
+        analysis_group_box.setLayout(analysis_box_layout)
 
-        self.graph_manager.initUI(analysisBoxLayout)
+        # Initialize Graph Manager UI
+        self.graph_manager.initUI(analysis_box_layout)
 
-        mainSplitter.addWidget(analysisWidget)
+        # Add data analysis widget to splitter
+        main_splitter.addWidget(analysis_widget)
 
-        channelSelectWidget = QWidget()
-        channelSelectLayout = QVBoxLayout(channelSelectWidget)
-        channelSelectGroupBox = QtWidgets.QGroupBox("Channel Selection")
-        channelSelectLayout.addWidget(channelSelectGroupBox)
-        channelSelectBoxLayout = QVBoxLayout()
-        channelSelectGroupBox.setLayout(channelSelectBoxLayout)
+        # Channel Selection widget
+        channel_select_widget = QWidget()
+        channel_select_layout = QVBoxLayout(channel_select_widget)
+        channel_select_group_box = QtWidgets.QGroupBox("Channel Selection")
+        channel_select_layout.addWidget(channel_select_group_box)
+        channel_select_box_layout = QVBoxLayout()
+        channel_select_group_box.setLayout(channel_select_box_layout)
 
-        self.channel_selector.initUI(channelSelectBoxLayout)
+        # Initialize Channel Selector UI
+        self.channel_selector.initUI(channel_select_box_layout)
 
-        mainSplitter.addWidget(channelSelectWidget)
-
-        # Add Model Manager UI
-        modelWidget = QWidget()
-        modelLayout = QVBoxLayout(modelWidget)
-        modelGroupBox = QtWidgets.QGroupBox("Model")
-        modelLayout.addWidget(modelGroupBox)
-        modelBoxLayout = QVBoxLayout()
-        modelGroupBox.setLayout(modelBoxLayout)
-
-        self.model_manager.initUI(modelBoxLayout)
-
-        mainSplitter.addWidget(modelWidget)
+        # Add channel selection widget to splitter
+        main_splitter.addWidget(channel_select_widget)
 
         # Set initial sizes
-        mainSplitter.setStretchFactor(0, 1)
-        mainSplitter.setStretchFactor(1, 5)
-        mainSplitter.setStretchFactor(2, 1)
-        mainSplitter.setStretchFactor(3, 1)
+        main_splitter.setStretchFactor(0, 1)
+        main_splitter.setStretchFactor(1, 5)
+        main_splitter.setStretchFactor(2, 1)
 
-        layout.addWidget(mainSplitter)
+        # Add main splitter to main layout
+        main_layout.addWidget(main_splitter)
 
+        # Set the central widget and layout
         self.setCentralWidget(central_widget)
         self.show()
 
@@ -181,8 +197,10 @@ class EEGAnalyzer(QMainWindow):
 
     def apply_custom_filter(self):
         if self.raw is not None:
-            low_cutoff, ok1 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter Low Cutoff Frequency:", 1.0, 0, 1000, 2)
-            high_cutoff, ok2 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter High Cutoff Frequency:", 40.0, 0, 1000, 2)
+            low_cutoff, ok1 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter Low Cutoff Frequency:",
+                                                               1.0, 0, 1000, 2)
+            high_cutoff, ok2 = QtWidgets.QInputDialog.getDouble(self, "Custom Filter", "Enter High Cutoff Frequency:",
+                                                                40.0, 0, 1000, 2)
             if ok1 and ok2:
                 self.raw.filter(low_cutoff, high_cutoff, fir_design='firwin')
                 self.data = self.raw.get_data()
@@ -199,6 +217,35 @@ class EEGAnalyzer(QMainWindow):
             QMessageBox.warning(self, "No Data", "No EEG data available for kurtosis calculation.")
             return None
 
+    def load_model(self):
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Load Model", "",
+                                                             "All Files (*);;Pickle Files (*.pkl)")
+        if file_name:
+            try:
+                self.model = joblib.load(file_name)  # Load scikit-learn model
+                if self.predictButton is not None:
+                    self.predictButton.setEnabled(True)
+                    logging.info(f"Model loaded from {file_name}")
+                else:
+                    logging.error("Predict button is not initialized.")
+            except Exception as e:
+                logging.error(f"Failed to load model: {e}")
+                QtWidgets.QMessageBox.critical(None, "Error", "Failed to load model.")
+
+    def predict_events(self):
+        if self.data is None:
+            QMessageBox.warning(self, "Warning", "No EEG data available for prediction.")
+            return
+
+        # Use the predict method from ModelManager
+        predictions = self.model_manager.predict(self.data)
+
+        if predictions is not None:
+            # Handle the predictions (e.g., display them, store them, etc.)
+            print(f"Predictions: {predictions}")
+            # Optionally, display predictions in the GUI or log them
+        else:
+            logging.error("Failed to get predictions from the model.")
 
     def showAboutDialog(self):
         QMessageBox.about(self, "About",
