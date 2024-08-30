@@ -1,8 +1,8 @@
-OssEEG: EEG Analysis 
+#OssEEG: EEG Analysis 
 
 OssEEG is a graphical user interface (GUI) application for processing, analyzing, and visualizing electroencephalogram (EEG) data. It is designed for researchers and practitioners who want to easily load EEG data, apply various preprocessing techniques, perform Independent Component Analysis (ICA), and visualize the results.
 
-Features
+#Features
 EEG File Loading: Supports loading of EEG data files in multiple formats.
 Preprocessing Tools: Includes tools for low-pass filtering, high-pass filtering, and custom filtering of EEG data.
 ICA Analysis: Allows users to run ICA on EEG data to identify and isolate independent components.
@@ -11,7 +11,7 @@ Multi-Component Visualization: Supports simultaneous display of multiple ICA com
 Reporting and Exporting: Generate and export analysis reports.
 
 
-Installing the Project
+#Installing the Project
 Clone the Repository
 
 bash
@@ -34,7 +34,7 @@ Loading EEG Data
 Click on File > Load EEG File from the menu bar.
 Choose the EEG data file from your local file system. Supported formats include .fif, .edf, .bdf, and others compatible with MNE.
 
-Preprocessing EEG Data
+#Preprocessing EEG Data
 Use the Preprocessing panel on the left side to apply filters to the EEG data:
 Low-Pass Filter: Removes high-frequency noise.
 High-Pass Filter: Removes low-frequency drift.
