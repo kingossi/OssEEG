@@ -1,8 +1,11 @@
-#OssEEG: EEG Analysis 
+
+
+## OssEEG: EEG Analysis 
 
 OssEEG is a graphical user interface (GUI) application for processing, analyzing, and visualizing electroencephalogram (EEG) data. It is designed for researchers and practitioners who want to easily load EEG data, apply various preprocessing techniques, perform Independent Component Analysis (ICA), and visualize the results.
 
-#Features
+## Features
+
 EEG File Loading: Supports loading of EEG data files in multiple formats.
 Preprocessing Tools: Includes tools for low-pass filtering, high-pass filtering, and custom filtering of EEG data.
 ICA Analysis: Allows users to run ICA on EEG data to identify and isolate independent components.
@@ -11,7 +14,8 @@ Multi-Component Visualization: Supports simultaneous display of multiple ICA com
 Reporting and Exporting: Generate and export analysis reports.
 
 
-#Installing the Project
+## Installing the Project
+
 Clone the Repository
 
 bash
@@ -34,7 +38,8 @@ Loading EEG Data
 Click on File > Load EEG File from the menu bar.
 Choose the EEG data file from your local file system. Supported formats include .fif, .edf, .bdf, and others compatible with MNE.
 
-#Preprocessing EEG Data
+## Preprocessing EEG Data
+
 Use the Preprocessing panel on the left side to apply filters to the EEG data:
 Low-Pass Filter: Removes high-frequency noise.
 High-Pass Filter: Removes low-frequency drift.
@@ -53,7 +58,8 @@ Exporting Reports
 Click on Export > Generate Report from the menu bar.
 Follow the prompts to generate and save an analysis report.
 
-Contributing
+## Contributing
+
 Contributions to OssEEG are welcome! If you would like to contribute, please follow these steps:
 
 Fork the repository.
@@ -71,14 +77,16 @@ Copy code
 git push origin feature-name
 Submit a pull request to the main branch of the original repository.
 
-License
+## License
+
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-Contact
-For questions, suggestions, or issues, please open an issue on the GitHub repository or contact the maintainers directly.
+## Contact
 
-Acknowledgments
+For questions, suggestions, or issues, please open an issue on the GitHub repository or contact me directly.
+
+## Acknowledgments
+
 MNE-Python team for providing excellent tools for EEG analysis.
 PyQt developers for the robust GUI framework.
 Vincenzo Marra for his invaluable feedback and support
-All contributors and users for their valuable feedback.
